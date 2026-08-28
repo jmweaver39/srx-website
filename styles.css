@@ -1,0 +1,343 @@
+* { box-sizing: border-box; }
+
+/* Follows the system setting — no toggle needed. Dark is a straight
+   inversion of light; the RGB glitch is handled on the canvas, where it
+   stays colour rather than inverting. */
+:root {
+  --paper: #f7f7f7;
+  --ink:   #000000;
+  --box:   #ffffff;
+  --dot:   rgba(0, 0, 0, .055);
+  --mark-invert: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #080808;
+    --ink:   #ffffff;
+    --box:   #000000;
+    --dot:   rgba(255, 255, 255, 0.07);
+    --mark-invert: 1;
+  }
+}
+
+/* every scroll gesture lands on a view, never between two */
+html {
+  scroll-snap-type: y mandatory;
+}
+
+/* the page still scrolls — the bar itself is just hidden */
+html {
+  scrollbar-width: none;          /* Firefox */
+  -ms-overflow-style: none;       /* legacy Edge */
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {         /* Chrome / Safari */
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+body {
+  margin: 0;
+
+  /* The canvas paints this same paper and dot grid behind the artwork; the
+     page carries it too so the texture covers the full document — including
+     any moment the canvas hasn't painted yet. `fixed` keeps the two grids
+     locked to the viewport so they can't drift apart while scrolling. */
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(circle at 0.5px 0.5px, var(--dot) 0.5px, transparent 0.6px);
+  background-size: 5px 5px;
+  background-attachment: fixed;
+
+  color: var(--ink);
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+img { display: block; max-width: 100%; }
+
+/* ── Header ── */
+
+.site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  align-items: flex-start;
+  padding: 18px 26px;
+}
+
+/* Brand and links occupy the same grid cell, so one fades out exactly
+   where the other fades in. Padding above gives the pointer somewhere to
+   land before it reaches the wordmark. */
+.dock {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 12;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 34px;
+}
+
+.dock-stack { display: grid; justify-items: center; }
+.dock-stack > .brand,
+.dock-stack > .links { grid-area: 1 / 1; }
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: inherit;
+  transition: opacity .28s ease;
+}
+
+.brand-mark {
+  width: 34px;
+  height: 34px;
+  clip-path: circle(50%);       /* the disc is inscribed; this drops the black corners */
+  filter: invert(var(--mark-invert));
+}
+
+
+.brand-name {
+  font-family: "Archivo Narrow", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 25px;
+  font-weight: 500;
+  letter-spacing: .02em;
+}
+
+.nav {
+  margin-left: auto;            /* logo stays left, labels sit top-right */
+  display: flex;
+  flex-direction: column;       /* stacked, not in a row */
+  align-items: stretch;         /* equal widths off the longest label */
+  gap: 10px;
+}
+
+.nav a {
+  font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  letter-spacing: .06em;
+  text-decoration: none;
+  color: var(--ink);
+  border: 1px solid var(--ink);
+  padding: 5px 13px;
+  text-align: center;
+  background: var(--box);
+  transition: background-color .15s, color .15s;
+}
+
+.nav a:hover,
+.nav a:focus-visible {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+/* ── Stage ── */
+
+/* The canvas paints the paper, its dot texture and the artwork itself, so
+   nothing here depends on blend modes or stacking contexts. */
+.stage {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  display: block;
+  width: 100%;
+  height: 100%;
+
+  /* Safari can throw away a fixed canvas's backing store when a neighbouring
+     element's opacity animation makes the compositor rebuild its layers —
+     the artwork simply vanishes, because nothing repaints a canvas on its
+     own. Giving it its own layer up front keeps it out of that rebuild. */
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* ── Scroll track ── */
+
+.track { }
+
+.snap {
+  height: 100vh;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+@media (max-width: 900px) {
+  .nav { gap: 30px; }
+  .nav a { font-size: 10px; padding: 4px 10px; }
+  .stage { --frame-w: min(88vw, calc(62vh * (2000 / 710))); }
+}
+
+/* Too narrow to sit the logo beside the nav: the nav keeps the top and
+   centre, and the logo drops to the bottom of the screen, centred. */
+@media (max-width: 640px) {
+  .site-header {
+    justify-content: flex-end;
+    padding: 14px 12px;
+  }
+
+  .nav { gap: 7px; }
+
+  .nav a { font-size: 10px; padding: 4px 9px; }
+
+  .brand { bottom: 20px; }
+}
+
+
+/* ── Dock links ─────────────────────────────────────────────────── */
+
+.links {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  justify-items: center;        /* each label centred over the one below */
+  gap: 7px 34px;
+  opacity: 0;
+  transform: translateY(6px);
+  pointer-events: none;
+  transition: opacity .28s ease, transform .28s cubic-bezier(.22,.61,.36,1);
+}
+
+.links a {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+
+/* Hover anywhere on the lockup — or keyboard focus inside it — swaps the
+   wordmark for the links. Driven by `menu-open` rather than :hover so the
+   artwork, the wordmark and the links all move on one signal, and so a
+   touch device (which has no hover) still opens the menu on tap. */
+body.menu-open .brand,
+.dock:focus-within .brand { opacity: 0; pointer-events: none; }
+
+body.menu-open .links,
+.dock:focus-within .links {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+/* Taken out of flow so the line can neither resize the lockup nor nudge the
+   links when it appears. Its left edge is set in script, measured off the
+   finished string, so the text stays put while it types and deletes. */
+.dock-note {
+  position: absolute;
+  top: 0;
+  margin: 0;
+  font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  color: var(--ink);
+  pointer-events: none;
+  white-space: pre;
+}
+
+/* Only the wordmark gives way to the links — the artwork stays put. */
+
+/* ── Section pages ──────────────────────────────────────────────── */
+
+.page {
+  position: fixed;
+  left: 29.5%;
+  top: 17%;
+  z-index: 11;
+  max-width: 22em;
+}
+
+.page[hidden] { display: none; }
+
+.page-title {
+  margin: 0 0 22px;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.page-lede {
+  margin: 0 0 22px;
+  font-size: 15px;
+  line-height: 1.35;
+  white-space: pre-line;
+}
+
+/* Mono, so the named row and the binary rows around it sit on one grid and
+   the list doesn't reflow as entries resolve. */
+.page-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.back {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 12;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.back[hidden] { display: none; }
+
+/* Copy glitches on the same beat as the artwork: a red/cyan channel split.
+   The type never moves, and neither does the split's direction — red stays
+   left of the glyphs, cyan stays right, and only the distance between them
+   changes. Alternating the sides frame to frame is what reads as shake, even
+   though nothing is actually being translated. */
+@keyframes copySplit {
+  0%   { text-shadow: none; }
+  18%  { text-shadow: -2px 0 rgba(255,0,0,.8), 2px 0 rgba(0,190,255,.8); }
+  38%  { text-shadow: -3px 0 rgba(255,0,0,.85), 3px 0 rgba(0,190,255,.85); opacity: .7; }
+  58%  { text-shadow: -2px 0 rgba(255,0,0,.7), 2px 0 rgba(0,190,255,.7); }
+  78%  { text-shadow: -1px 0 rgba(255,0,0,.5), 1px 0 rgba(0,190,255,.5); opacity: .92; }
+  100% { text-shadow: none; }
+}
+
+.page.is-glitching .page-title,
+.page.is-glitching .page-lede,
+.page.is-glitching .page-list {
+  animation: copySplit 250ms steps(1, end);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page.is-glitching .page-title,
+  .page.is-glitching .page-lede,
+  .page.is-glitching .page-list { animation: none; }
+}
+
+@media (max-width: 900px) {
+  .page { left: 8%; top: 13%; }
+  .links { gap: 6px 24px; }
+}
+
+/* Under a finger the page never pans on either axis — the script owns both,
+   and lets the browser keep pinch-zoom. Declared up front so no scroll is
+   started before the touchmove handler can claim the gesture. */
+@media (pointer: coarse) {
+  html, body { touch-action: pinch-zoom; }
+}
+
+/* A section keeps the page scrolling — it is the same snap track underneath,
+   rebuilt for the section's own stops, so scrolling behaves identically. */
+
+.dock[hidden] { display: none; }

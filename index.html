@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SRX</title>
+<link rel="icon" href="assets/slide-1.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="styles.css?v=19">
+</head>
+<body>
+
+<header class="site-header">
+  <!-- The bottom lockup. Hovering anywhere over it fades the artwork and
+       the wordmark out and brings the four links up in their place. -->
+  <div class="dock">
+    <p class="dock-note" aria-live="polite"></p>
+
+    <div class="dock-stack">
+      <a class="brand" href="#">
+        <img class="brand-mark" src="assets/logo.png" alt="">
+        <span class="brand-name">SRX AB-001</span>
+      </a>
+
+      <nav class="links" aria-label="Sections">
+        <a href="#" data-page="team">Team</a>
+        <a href="#" data-act="contact">Contact</a>
+        <a href="https://boomsupersonic.com/prize" target="_blank" rel="noopener noreferrer">Challenge</a>
+        <a href="#" data-page="support">Support Us</a>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<!-- Copy for whichever section is open. Filled from PAGES in scroll.js so
+     the text and the artwork can't drift apart. -->
+<section class="page" hidden>
+  <h1 class="page-title"></h1>
+  <p class="page-lede"></p>
+  <ul class="page-list"></ul>
+</section>
+
+<a class="back" href="#" hidden>back</a>
+
+<!-- The three views are composited on a canvas rather than as stacked
+     blend-mode layers. The RGB channel split is done explicitly in pixels,
+     so it renders identically everywhere — nested mix-blend-mode layers
+     are handled inconsistently across browsers. -->
+<canvas class="stage" aria-hidden="true"></canvas>
+
+<!-- scroll track: one snap section per step, so scrolling always
+     settles on a view and never rests between two -->
+<div class="track"></div>
+
+<script src="scroll.js?v=47"></script>
+</body>
+</html>
