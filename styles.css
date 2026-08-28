@@ -230,6 +230,31 @@ body.menu-open .links,
   pointer-events: auto;
 }
 
+/* A small caret over the wordmark, saying the lockup is live. It bobs so it
+   reads as an affordance rather than punctuation, and it retires for good the
+   first time the links actually come up — see retireHint() in scroll.js. */
+.dock-hint {
+  position: absolute;
+  left: 50%;
+  top: 2px;
+  transform: translateX(-50%);
+  font: 400 11px/1 ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
+  color: var(--ink);
+  pointer-events: none;
+  animation: dockBob 2.4s ease-in-out infinite;
+}
+
+.dock-hint[hidden] { display: none; }
+
+@keyframes dockBob {
+  0%, 100% { transform: translate(-50%, 0);    opacity: .30; }
+  50%      { transform: translate(-50%, -3px); opacity: .60; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dock-hint { animation: none; opacity: .42; }
+}
+
 /* Taken out of flow so the line can neither resize the lockup nor nudge the
    links when it appears. Its left edge is set in script, measured off the
    finished string, so the text stays put while it types and deletes. */
