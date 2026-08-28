@@ -851,19 +851,25 @@
   function say(msg) {
     clearTimeout(typeTimer);
     stopBlink();
+    note.style.left = '';
+    note.textContent = '';
 
-    /* Fix the left edge up front, measured off the finished line, so the text
-       only ever grows to the right and shrinks back the same way — it never
-       slides sideways part-way through. The completed line still reads as
-       centred; it is simply anchored where it will end up rather than being
-       re-centred on every character. */
-    note.textContent = msg + CARET;
-    var full = note.getBoundingClientRect().width;
-    note.style.left = Math.round((dock.getBoundingClientRect().width - full) / 2) + 'px';
+    var room = dock.getBoundingClientRect().width;
+
+    /* Typing runs centred — the line is re-centred on every character, so it
+       grows out of the middle in both directions. Once the last character
+       lands, `left` is simply left where it is: from that point the line is
+       left-bound, and backspacing eats characters off the right without
+       dragging the text sideways. Freezing the value it already holds is what
+       makes the handover invisible. */
+    function centre() {
+      note.style.left = Math.round((room - note.offsetWidth) / 2) + 'px';
+    }
 
     var n = 0;
     (function typeOn() {
       note.textContent = msg.slice(0, ++n) + CARET;
+      centre();
       if (n < msg.length) { typeTimer = setTimeout(typeOn, TYPE); return; }
 
       /* Nothing is being typed now, so the caret flashes the way a text
@@ -881,6 +887,7 @@
           note.textContent = msg.slice(0, --n) + (n ? CARET : '');
           if (n) { typeTimer = setTimeout(typeOff, ERASE); return; }
           note.textContent = '';
+          note.style.left = '';
         })();
       }, HOLD);
     })();
