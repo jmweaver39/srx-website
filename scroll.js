@@ -45,7 +45,7 @@
         { src: 'assets/drone.png',  scale: 0.40, nudgeX: 30 },
         { src: 'assets/robot.png',  scale: 0.36 }
       ],
-      cycle: 3000                        // ms per item, until the first scroll takes over
+      cycle: 2000                        // ms per item, until the first scroll takes over
     },
     support: {
       title: 'Support Us',
