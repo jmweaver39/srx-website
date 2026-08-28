@@ -683,12 +683,36 @@
   /* ── sections ────────────────────────────────────────────────── */
 
   var dock = document.querySelector('.dock');
+  var hint = document.querySelector('.dock-hint');
   var note = document.querySelector('.dock-note');
   var pageEl = document.querySelector('.page');
   var titleEl = pageEl.querySelector('.page-title');
   var ledeEl = pageEl.querySelector('.page-lede');
   var listEl = pageEl.querySelector('.page-list');
   var backEl = document.querySelector('.back');
+
+  /* The caret exists only to say the lockup is live. The moment the links
+     actually come up that has been said, so it retires for the rest of this
+     page view. Nothing is remembered across loads: every reload starts over
+     with the hint showing.
+
+     It only counts as "come up" if the reader made it happen. A pointer
+     already resting over the lockup fires `pointerenter` about 50ms into the
+     load, and the browser emits pointer events of its own while the page
+     settles — nobody has done anything, and retiring on those would hide the
+     hint before it was ever seen. Anything inside the opening moments is
+     therefore ignored; a deliberate open comes later than this by far. */
+  var HINT_GRACE = 700;   // ms of load-time noise to sit out
+
+  function retireHint() {
+    if (hint && performance.now() > HINT_GRACE) hint.hidden = true;
+  }
+
+  function setMenu(on) {
+
+    document.body.classList.toggle('menu-open', on);
+    if (on) retireHint();
+  }
 
   function paintCopy() {
     var p = PAGES[page];
@@ -923,7 +947,7 @@
 
     if (a.classList.contains('brand')) {
       e.preventDefault();
-      if (!page) document.body.classList.toggle('menu-open');
+      if (!page) setMenu(!document.body.classList.contains('menu-open'));
       return;
     }
 
@@ -942,7 +966,7 @@
   function menu(on) {
     return function () {
       if (page) return;
-      document.body.classList.toggle('menu-open', on);
+      setMenu(on);
 
       /* Second line of defence for the same Safari issue: repaint once now
          and once after the fade has finished, so a backing store dropped at
@@ -976,7 +1000,7 @@
     var linksEl = dock.querySelector('.links');
     brand.style.transition = 'none';
     linksEl.style.transition = 'none';
-    document.body.classList.add('menu-open');
+    setMenu(true);
     void dock.offsetWidth;
     brand.style.transition = '';
     linksEl.style.transition = '';
@@ -1070,7 +1094,7 @@
     // vertical: the menu, once per gesture, and nothing else
     if (swipe.menuDone || page || Math.abs(dy) < MENU_SWIPE) return;
     swipe.menuDone = true;
-    document.body.classList.toggle('menu-open', dy < 0);
+    setMenu(dy < 0);
   }
 
   function onTouchEnd() {
