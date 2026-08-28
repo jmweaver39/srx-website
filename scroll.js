@@ -50,7 +50,7 @@
     support: {
       title: 'Support Us',
       lede: "we're looking for in-kind\ndonations & funding for:",
-      items: ['dji fpv systems', 'composites'],
+      items: ['unrestricted funds','dji fpv systems', 'composites'],
       /* Sized so the head-on body matches the fuselage in the other views.
          The side view's tube measures 152px of the 2000px nominal frame;
          the body in front.png is 47px tall against its 259px width. So the
